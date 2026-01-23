@@ -10,13 +10,21 @@ export async function GET(request: Request) {
   if (response) return response;
   const householdId = await getHouseholdId(session.user.id);
   const url = new URL(request.url);
+  const fromParam = url.searchParams.get('from');
+  const toParam = url.searchParams.get('to');
   const month = url.searchParams.get('month');
-  if (!month) {
-    return NextResponse.json({ error: 'month required' }, { status: 400 });
+  let from: Date;
+  let to: Date;
+  if (fromParam && toParam) {
+    from = new Date(fromParam);
+    to = new Date(toParam);
+  } else if (month) {
+    const [year, monthIndex] = month.split('-').map(Number);
+    from = startOfMonth(new Date(year, monthIndex - 1, 1));
+    to = endOfMonth(from);
+  } else {
+    return NextResponse.json({ error: 'month or from/to required' }, { status: 400 });
   }
-  const [year, monthIndex] = month.split('-').map(Number);
-  const from = startOfMonth(new Date(year, monthIndex - 1, 1));
-  const to = endOfMonth(from);
 
   const [recurring, oneTimes, overrides, categories] = await Promise.all([
     prisma.recurringItem.findMany({ where: { householdId } }),

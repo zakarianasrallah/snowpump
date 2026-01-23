@@ -55,6 +55,18 @@ npm run test
 npm run test:e2e
 ```
 
+## Utiliser les périodes
+- Par défaut, l'application affiche un **récap 2 semaines** (filtre global en haut des pages).
+- Pour changer la période, utilisez le sélecteur (2 semaines, 1 mois, 3 mois) ou “Personnalisé” puis **Appliquer**.
+
+## Ajouter un revenu ou une dépense récurrent(e)
+1. Ouvrez l’onglet **Récurrents**.
+2. Renseignez le type (revenu/dépense), la fréquence, les dates et le montant.
+3. Pour une **dépense**, la catégorie est obligatoire.
+4. Validez avec **Ajouter** : les occurrences seront prises en compte dans la projection.
+
+=======
+
 ## Scripts
 - `npm run dev` : serveur Next.js
 - `npm run build` : build production

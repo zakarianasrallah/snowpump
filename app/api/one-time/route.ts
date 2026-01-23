@@ -5,13 +5,20 @@ import { requireApiSession } from '@/lib/api-auth';
 import { getHouseholdId } from '@/lib/household';
 import { oneTimeSchema } from '@/lib/validators';
 
-export async function GET() {
+export async function GET(request: Request) {
   const { session, response } = await requireApiSession();
   if (response) return response;
 
   const householdId = await getHouseholdId(session.user.id);
+  const url = new URL(request.url);
+  const fromParam = url.searchParams.get('from');
+  const toParam = url.searchParams.get('to');
+  const dateFilter =
+    fromParam && toParam
+      ? { gte: new Date(fromParam), lte: new Date(toParam) }
+      : undefined;
   const items = await prisma.oneTimeItem.findMany({
-    where: { householdId },
+    where: { householdId, ...(dateFilter ? { date: dateFilter } : {}) },
     orderBy: { date: 'desc' },
     include: { category: true }
   });
