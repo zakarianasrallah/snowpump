@@ -29,10 +29,22 @@ export function SettingsClient() {
       fetch('/api/fx/rates'),
       fetch('/api/demo')
     ]);
-    setCategories(await categoriesRes.json());
-    setRates(await ratesRes.json());
-    const demo = await demoRes.json();
-    setDemoEnabled(demo.enabled);
+    if (categoriesRes.ok) {
+      setCategories(await categoriesRes.json());
+    } else {
+      setCategories([]);
+    }
+    if (ratesRes.ok) {
+      setRates(await ratesRes.json());
+    } else {
+      setRates([]);
+    }
+    if (demoRes.ok) {
+      const demo = await demoRes.json();
+      setDemoEnabled(demo.enabled);
+    } else {
+      setDemoEnabled(false);
+    }
   };
 
   useEffect(() => {
