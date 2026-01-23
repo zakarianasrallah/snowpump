@@ -5,7 +5,6 @@ const links = [
   { href: '/', label: 'Dashboard' },
   { href: '/calendar', label: 'Calendrier' },
   { href: '/transactions', label: 'Transactions' },
-  { href: '/recurring', label: 'Récurrents' },
   { href: '/reports', label: 'Rapports' },
   { href: '/settings', label: 'Settings' }
 ];

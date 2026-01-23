@@ -4,47 +4,27 @@ export const currencySchema = z.enum(['CAD', 'MAD']);
 export const itemTypeSchema = z.enum(['INCOME', 'EXPENSE']);
 export const frequencySchema = z.enum(['WEEKLY', 'BIWEEKLY', 'MONTHLY']);
 
-export const oneTimeSchema = z
-  .object({
-    type: itemTypeSchema,
-    name: z.string().min(1),
-    categoryId: z.string().optional().nullable(),
-    amount: z.number().positive(),
-    currency: currencySchema,
-    date: z.string()
-  })
-  .superRefine((value, context) => {
-    if (value.type === 'EXPENSE' && !value.categoryId) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Category required for expense',
-        path: ['categoryId']
-      });
-    }
-  });
+export const oneTimeSchema = z.object({
+  type: itemTypeSchema,
+  name: z.string().min(1),
+  categoryId: z.string().optional().nullable(),
+  amount: z.number().positive(),
+  currency: currencySchema,
+  date: z.string()
+});
 
-export const recurringSchema = z
-  .object({
-    type: itemTypeSchema,
-    name: z.string().min(1),
-    categoryId: z.string().optional().nullable(),
-    amount: z.number().positive(),
-    currency: currencySchema,
-    frequency: frequencySchema,
-    startDate: z.string(),
-    endDate: z.string().optional().nullable(),
-    graceDays: z.number().int().optional().nullable(),
-    isActive: z.boolean().optional()
-  })
-  .superRefine((value, context) => {
-    if (value.type === 'EXPENSE' && !value.categoryId) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Category required for expense',
-        path: ['categoryId']
-      });
-    }
-  });
+export const recurringSchema = z.object({
+  type: itemTypeSchema,
+  name: z.string().min(1),
+  categoryId: z.string().optional().nullable(),
+  amount: z.number().positive(),
+  currency: currencySchema,
+  frequency: frequencySchema,
+  startDate: z.string(),
+  endDate: z.string().optional().nullable(),
+  graceDays: z.number().int().optional().nullable(),
+  isActive: z.boolean().optional()
+});
 
 export const categorySchema = z.object({
   name: z.string().min(1)

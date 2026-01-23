@@ -9,11 +9,10 @@ test('login and add expenses', async ({ page }) => {
   await page.getByLabel('Mot de passe').fill(password);
   await page.getByRole('button', { name: 'Continuer' }).click();
 
-  await expect(page.getByText('Ajouter une transaction')).toBeVisible();
+  await expect(page.getByText('Ajouter une dépense ponctuelle')).toBeVisible();
 
   await page.getByPlaceholder('Nom').fill('Café');
   await page.getByPlaceholder('Montant').fill('12');
-  await page.getByLabel('Catégorie').selectOption({ index: 1 });
   await page.getByRole('button', { name: 'Ajouter' }).click();
 
   await expect(page.getByText('Café')).toBeVisible();
@@ -23,7 +22,6 @@ test('login and add expenses', async ({ page }) => {
   await page.getByPlaceholder('Nom').fill('Transfert');
   await page.getByPlaceholder('Montant').fill('100');
   await page.getByDisplayValue('CAD').selectOption('MAD');
-  await page.getByLabel('Catégorie').selectOption({ index: 1 });
   await page.getByRole('button', { name: 'Ajouter' }).click();
 
   await expect(page.getByText('Transfert')).toBeVisible();

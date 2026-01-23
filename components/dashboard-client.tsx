@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
@@ -32,31 +31,18 @@ const formatMoney = (value: number) =>
   new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(value);
 
 export function DashboardClient() {
-  const params = useSearchParams();
   const [projection, setProjection] = useState<ProjectionResponse | null>(null);
   const [error, setError] = useState('');
   const [categories, setCategories] = useState<Record<string, string>>({});
-  const [categoryList, setCategoryList] = useState<{ id: string; name: string }[]>([]);
-  const [type, setType] = useState<'INCOME' | 'EXPENSE'>('EXPENSE');
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState<'CAD' | 'MAD'>('CAD');
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
-  const [categoryId, setCategoryId] = useState('');
-  const [hasFxRate, setHasFxRate] = useState(true);
-
-  const from = params.get('from');
-  const to = params.get('to');
-  const rangeLabel = useMemo(() => {
-    if (!from || !to) return '';
-    const fromDate = new Date(from);
-    const toDate = new Date(to);
-    return `${fromDate.toLocaleDateString('fr-CA')} → ${toDate.toLocaleDateString('fr-CA')}`;
-  }, [from, to]);
 
   const loadProjection = async () => {
-    if (!from || !to) return;
-    const response = await fetch(`/api/projection?from=${from}&to=${to}`);
+    const from = new Date();
+    const to = new Date();
+    to.setDate(to.getDate() + 90);
+    const response = await fetch(`/api/projection?from=${from.toISOString()}&to=${to.toISOString()}`);
     if (!response.ok) {
       setError('Impossible de charger les données.');
       return;
@@ -75,34 +61,22 @@ export function DashboardClient() {
           map[category.id] = category.name;
         }
         setCategories(map);
-        setCategoryList(data);
       });
-    fetch('/api/fx/rates')
-      .then((res) => res.json())
-      .then((data) => setHasFxRate(data.length > 0));
-  }, [from, to]);
+  }, []);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError('');
-    if (type === 'EXPENSE' && !categoryId) {
-      setError('La catégorie est obligatoire pour une dépense.');
-      return;
-    }
-    if (currency === 'MAD' && !hasFxRate) {
-      setError('Impossible de créer une transaction MAD sans taux de change disponible.');
-      return;
-    }
     const response = await fetch('/api/one-time', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        type,
+        type: 'EXPENSE',
         name,
         amount: Number(amount),
         currency,
-        date: new Date(date).toISOString(),
-        categoryId: categoryId || null
+        date: new Date().toISOString(),
+        categoryId: null
       })
     });
     if (!response.ok) {
@@ -111,7 +85,6 @@ export function DashboardClient() {
     }
     setName('');
     setAmount('');
-    setCategoryId('');
     await loadProjection();
   };
 
@@ -152,10 +125,6 @@ export function DashboardClient() {
 
   return (
     <div className="space-y-8">
-      <section className="rounded-lg bg-white p-4 shadow">
-        <p className="text-xs font-semibold uppercase text-slate-500">Récap période</p>
-        <p className="mt-1 text-sm text-slate-700">{rangeLabel || 'Sélectionnez une période.'}</p>
-      </section>
       <section className="grid gap-4 md:grid-cols-4">
         <div className="rounded-lg bg-white p-4 shadow">
           <p className="text-sm text-slate-500">Revenus</p>
@@ -215,16 +184,8 @@ export function DashboardClient() {
       ) : null}
 
       <section className="rounded-lg bg-white p-4 shadow">
-        <h2 className="text-lg font-semibold">Ajouter une transaction</h2>
-        <form className="mt-4 grid gap-3 md:grid-cols-6" onSubmit={handleSubmit}>
-          <Select
-            value={type}
-            onChange={(event) => setType(event.target.value as 'INCOME' | 'EXPENSE')}
-            aria-label="Type"
-          >
-            <option value="INCOME">Revenu</option>
-            <option value="EXPENSE">Dépense</option>
-          </Select>
+        <h2 className="text-lg font-semibold">Ajouter une dépense ponctuelle</h2>
+        <form className="mt-4 grid gap-3 md:grid-cols-4" onSubmit={handleSubmit}>
           <Input
             placeholder="Nom"
             value={name}
@@ -239,33 +200,9 @@ export function DashboardClient() {
             onChange={(event) => setAmount(event.target.value)}
             required
           />
-          <Select
-            value={currency}
-            onChange={(event) => setCurrency(event.target.value as 'CAD' | 'MAD')}
-            aria-label="Devise"
-          >
+          <Select value={currency} onChange={(event) => setCurrency(event.target.value as 'CAD' | 'MAD')}>
             <option value="CAD">CAD</option>
             <option value="MAD">MAD</option>
-          </Select>
-          <Input
-            type="date"
-            value={date}
-            onChange={(event) => setDate(event.target.value)}
-            required
-            aria-label="Date"
-          />
-          <Select
-            value={categoryId}
-            onChange={(event) => setCategoryId(event.target.value)}
-            required={type === 'EXPENSE'}
-            aria-label="Catégorie"
-          >
-            <option value="">Catégorie</option>
-            {categoryList.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
           </Select>
           <Button type="submit">Ajouter</Button>
         </form>
@@ -273,7 +210,7 @@ export function DashboardClient() {
       </section>
 
       <section className="rounded-lg bg-white p-4 shadow">
-        <h2 className="text-lg font-semibold">Timeline (période)</h2>
+        <h2 className="text-lg font-semibold">Timeline (90 jours)</h2>
         <div className="mt-4 space-y-3">
           {entries.length === 0 ? (
             <p className="text-sm text-slate-500">Aucune transaction.</p>

@@ -65,6 +65,8 @@ npm run test:e2e
 3. Pour une **dépense**, la catégorie est obligatoire.
 4. Validez avec **Ajouter** : les occurrences seront prises en compte dans la projection.
 
+=======
+
 ## Scripts
 - `npm run dev` : serveur Next.js
 - `npm run build` : build production

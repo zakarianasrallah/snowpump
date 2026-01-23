@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 type Report = {
   totals: {
@@ -17,32 +16,23 @@ const formatMoney = (value: number) =>
   new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(value);
 
 export function ReportsClient() {
-  const params = useSearchParams();
   const [report, setReport] = useState<Report | null>(null);
-
-  const from = params.get('from');
-  const to = params.get('to');
-
-  const rangeLabel = useMemo(() => {
-    if (!from || !to) return '';
-    return `${new Date(from).toLocaleDateString('fr-CA')} → ${new Date(to).toLocaleDateString('fr-CA')}`;
-  }, [from, to]);
 
   useEffect(() => {
     const load = async () => {
-      if (!from || !to) return;
-      const response = await fetch(`/api/reports/monthly?from=${from}&to=${to}`);
+      const now = new Date();
+      const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const response = await fetch(`/api/reports/monthly?month=${month}`);
       const data = await response.json();
       setReport(data);
     };
     load();
-  }, [from, to]);
+  }, []);
 
   return (
     <div className="space-y-6">
       <section className="rounded-lg bg-white p-4 shadow">
-        <h2 className="text-lg font-semibold">Totaux de la période</h2>
-        {rangeLabel ? <p className="text-sm text-slate-500">{rangeLabel}</p> : null}
+        <h2 className="text-lg font-semibold">Totaux mensuels</h2>
         <div className="mt-4 grid gap-4 md:grid-cols-3">
           <div>
             <p className="text-sm text-slate-500">Revenus</p>
