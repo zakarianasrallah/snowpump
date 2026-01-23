@@ -1,0 +1,136 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Currency {
+  CAD
+  MAD
+}
+
+enum ItemType {
+  INCOME
+  EXPENSE
+}
+
+enum Frequency {
+  WEEKLY
+  BIWEEKLY
+  FOUR_WEEKS
+  MONTHLY
+}
+
+enum FxSource {
+  API
+  MANUAL
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  householdId  String
+  household    Household @relation(fields: [householdId], references: [id])
+  createdAt    DateTime @default(now())
+}
+
+model Household {
+  id          String            @id @default(cuid())
+  name        String            @default("Foyer")
+  members     HouseholdMember[]
+  users       User[]
+  categories  Category[]
+  recurring   RecurringItem[]
+  oneTimes    OneTimeItem[]
+  fxRates     FxRate[]
+  overrides   OccurrenceOverride[]
+  demoState   DemoState?
+  createdAt   DateTime          @default(now())
+}
+
+model HouseholdMember {
+  id          String   @id @default(cuid())
+  householdId String
+  name        String
+  household   Household @relation(fields: [householdId], references: [id])
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  householdId String
+  name        String
+  household   Household @relation(fields: [householdId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model RecurringItem {
+  id          String    @id @default(cuid())
+  householdId String
+  type        ItemType
+  name        String
+  categoryId  String?
+  amount      Decimal   @db.Decimal(12, 2)
+  currency    Currency
+  frequency   Frequency
+  startDate   DateTime  @db.Date
+  endDate     DateTime? @db.Date
+  graceDays   Int?
+  isActive    Boolean   @default(true)
+  household   Household @relation(fields: [householdId], references: [id])
+  category    Category? @relation(fields: [categoryId], references: [id])
+  overrides   OccurrenceOverride[]
+  createdAt   DateTime  @default(now())
+}
+
+model OneTimeItem {
+  id          String    @id @default(cuid())
+  householdId String
+  type        ItemType
+  name        String
+  categoryId  String?
+  amount      Decimal   @db.Decimal(12, 2)
+  currency    Currency
+  date        DateTime  @db.Date
+  household   Household @relation(fields: [householdId], references: [id])
+  category    Category? @relation(fields: [categoryId], references: [id])
+  createdAt   DateTime  @default(now())
+}
+
+model FxRate {
+  id           String   @id @default(cuid())
+  householdId  String
+  fromCurrency Currency
+  toCurrency   Currency
+  rate         Decimal  @db.Decimal(12, 6)
+  effectiveDate DateTime @db.Date
+  source       FxSource
+  fetchedAt    DateTime @default(now())
+  household    Household @relation(fields: [householdId], references: [id])
+
+  @@unique([householdId, fromCurrency, toCurrency, effectiveDate, source])
+}
+
+model OccurrenceOverride {
+  id             String   @id @default(cuid())
+  householdId    String
+  recurringItemId String
+  date           DateTime @db.Date
+  paid           Boolean  @default(false)
+  editedAmount   Decimal? @db.Decimal(12, 2)
+  note           String?
+  recurringItem  RecurringItem @relation(fields: [recurringItemId], references: [id])
+  household      Household @relation(fields: [householdId], references: [id])
+
+  @@unique([recurringItemId, date])
+}
+
+model DemoState {
+  id          String   @id @default(cuid())
+  householdId String   @unique
+  enabled     Boolean  @default(false)
+  household   Household @relation(fields: [householdId], references: [id])
+}
