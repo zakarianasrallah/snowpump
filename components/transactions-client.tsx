@@ -9,7 +9,6 @@ type OneTimeItem = {
   amount: string;
   currency: 'CAD' | 'MAD';
   date: string;
-  category?: { name: string } | null;
 };
 
 export function TransactionsClient() {
@@ -33,14 +32,13 @@ export function TransactionsClient() {
             <th className="py-2">Date</th>
             <th>Nom</th>
             <th>Type</th>
-            <th>Catégorie</th>
             <th>Montant</th>
           </tr>
         </thead>
         <tbody>
           {items.length === 0 ? (
             <tr>
-              <td colSpan={5} className="py-4 text-center text-slate-500">
+              <td colSpan={4} className="py-4 text-center text-slate-500">
                 Aucune transaction.
               </td>
             </tr>
@@ -50,7 +48,6 @@ export function TransactionsClient() {
                 <td className="py-2">{item.date.slice(0, 10)}</td>
                 <td>{item.name}</td>
                 <td>{item.type === 'INCOME' ? 'Revenu' : 'Dépense'}</td>
-                <td>{item.category?.name ?? '—'}</td>
                 <td>
                   {item.amount} {item.currency}
                 </td>

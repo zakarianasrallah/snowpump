@@ -33,6 +33,7 @@ const formatMoney = (value: number) =>
 export function DashboardClient() {
   const [projection, setProjection] = useState<ProjectionResponse | null>(null);
   const [error, setError] = useState('');
+  const [categories, setCategories] = useState<Record<string, string>>({});
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
   const [currency, setCurrency] = useState<'CAD' | 'MAD'>('CAD');
@@ -52,6 +53,15 @@ export function DashboardClient() {
 
   useEffect(() => {
     loadProjection();
+    fetch('/api/categories')
+      .then((res) => res.json())
+      .then((data) => {
+        const map: Record<string, string> = {};
+        for (const category of data) {
+          map[category.id] = category.name;
+        }
+        setCategories(map);
+      });
   }, []);
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -91,6 +101,18 @@ export function DashboardClient() {
     grace.setDate(grace.getDate() + entry.graceDays);
     return new Date() > grace;
   }).length;
+
+  const topCategories = entries
+    .filter((entry) => entry.type === 'EXPENSE')
+    .reduce((acc, entry) => {
+      const key = entry.categoryId ?? 'uncategorized';
+      const amount = Number(entry.convertedAmount ?? 0);
+      acc[key] = (acc[key] ?? 0) + amount;
+      return acc;
+    }, {} as Record<string, number>);
+  const topCategoryList = Object.entries(topCategories)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3);
 
   const worstDay = entries.reduce<{ date: string; value: number } | null>((acc, entry) => {
     if (!entry.cumulative) return acc;
@@ -152,6 +174,15 @@ export function DashboardClient() {
           {overdueCount} paiement(s) en retard.
         </div>
       ) : null}
+      {topCategoryList.length > 0 ? (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
+          Top catégories:{" "}
+          {topCategoryList
+            .map(([key, value]) => `${categories[key] ?? 'Sans catégorie'} (${formatMoney(value)})`)
+            .join(', ')}
+        </div>
+      ) : null}
+
       <section className="rounded-lg bg-white p-4 shadow">
         <h2 className="text-lg font-semibold">Ajouter une dépense ponctuelle</h2>
         <form className="mt-4 grid gap-3 md:grid-cols-4" onSubmit={handleSubmit}>
@@ -169,10 +200,7 @@ export function DashboardClient() {
             onChange={(event) => setAmount(event.target.value)}
             required
           />
-          <Select
-            value={currency}
-            onChange={(event) => setCurrency(event.target.value as 'CAD' | 'MAD')}
-          >
+          <Select value={currency} onChange={(event) => setCurrency(event.target.value as 'CAD' | 'MAD')}>
             <option value="CAD">CAD</option>
             <option value="MAD">MAD</option>
           </Select>
